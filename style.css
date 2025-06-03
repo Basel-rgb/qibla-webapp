@@ -18,59 +18,28 @@ h1 {
     margin-bottom: 20px;
 }
 
-.tabs {
-    display: flex;
-    justify-content: space-around;
-    margin-bottom: 20px;
-    background-color: #fff;
-    border-radius: 10px;
-    padding: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-.tab {
-    padding: 10px 15px;
-    border: none;
-    background: none;
-    cursor: pointer;
-    font-size: 16px;
-    border-radius: 5px;
-    transition: all 0.3s;
-}
-
-.tab.active {
-    background-color: #3498db;
-    color: white;
-}
-
-.tab-content {
-    display: none;
-    padding: 20px;
-    background-color: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-.tab-content.active {
-    display: block;
-}
-
 #map-container {
-    height: 400px;
+    height: 300px;
     width: 100%;
     border-radius: 10px;
     margin-bottom: 15px;
+    border: 2px solid #ddd;
 }
 
 .location-info {
     background-color: #f8f9fa;
     padding: 15px;
     border-radius: 10px;
+    margin-bottom: 20px;
 }
 
 .location-info p {
     margin: 5px 0;
     font-size: 16px;
+}
+
+#direction-status {
+    font-weight: bold;
 }
 
 /* Kompass-Stile */
@@ -79,39 +48,43 @@ h1 {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 400px;
+    margin-top: 20px;
 }
 
-.compass {
-    width: 250px;
-    height: 250px;
+.compass-ring {
+    width: 280px;
+    height: 280px;
     border-radius: 50%;
     background-color: #f8f9fa;
     position: relative;
     border: 2px solid #333;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
 }
 
 .compass-arrow {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 50%;
-    height: 4px;
-    background-color: red;
+    width: 45%;
+    height: 6px;
+    background-color: #e74c3c;
     transform-origin: left center;
     transform: translate(0, -50%) rotate(0deg);
+    border-radius: 3px;
+    transition: transform 0.1s ease-out;
 }
 
-.compass-qibla {
+.compass-qibla-line {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 50%;
+    width: 45%;
     height: 4px;
     background-color: #3498db;
     transform-origin: left center;
-    opacity: 0.7;
+    transform: translate(0, -50%) rotate(0deg);
+    opacity: 0.8;
+    border-radius: 2px;
 }
 
 .compass-north {
@@ -120,80 +93,66 @@ h1 {
     left: 50%;
     transform: translateX(-50%);
     font-weight: bold;
-}
-
-.compass-direction {
-    margin-top: 20px;
     font-size: 18px;
-    text-align: center;
+    color: #333;
 }
 
-/* Live-Kompass-Stile */
-.live-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 400px;
-}
-
-.live-compass {
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    background-color: #f8f9fa;
-    position: relative;
-    border: 2px solid #333;
-    margin: 20px 0;
-}
-
-.live-arrow {
+.compass-center {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 40%;
-    height: 6px;
-    background-color: #e74c3c;
-    transform-origin: left center;
+    width: 12px;
+    height: 12px;
+    background-color: #333;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
 }
 
-.live-direction {
-    font-size: 20px;
+.direction-text {
+    margin-top: 20px;
+    font-size: 18px;
+    text-align: center;
     font-weight: bold;
 }
 
-/* Einstellungen-Stile */
-.settings-container {
-    max-width: 500px;
-    margin: 0 auto;
-}
-
-.setting {
+/* Genauigkeits-Anzeige */
+.accuracy-info {
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 10px;
     margin-bottom: 15px;
+    text-align: center;
 }
 
-.setting label {
+#accuracy-text {
     display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
+    margin-bottom: 8px;
+    font-size: 14px;
 }
 
-.setting select {
+.accuracy-bar {
     width: 100%;
-    padding: 8px;
-    border-radius: 5px;
-    border: 1px solid #ddd;
+    height: 8px;
+    background-color: #ddd;
+    border-radius: 4px;
+    overflow: hidden;
 }
 
-#save-settings {
+.accuracy-level {
+    height: 100%;
+    width: 0%;
     background-color: #3498db;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    margin-top: 10px;
+    transition: width 0.3s;
+}
+
+/* Farben für Ausrichtungsstatus */
+.correct-direction {
+    background-color: #2ecc71 !important;
+    box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+}
+
+.wrong-direction {
+    background-color: #e74c3c !important;
 }
 
 /* Dunkles Design */
@@ -202,31 +161,28 @@ body.dark {
     color: #eee;
 }
 
-body.dark .tab-content,
 body.dark .location-info,
-body.dark .compass,
-body.dark .live-compass {
+body.dark .compass-ring,
+body.dark .accuracy-info {
     background-color: #333;
     color: #eee;
 }
 
-body.dark .tabs {
-    background-color: #444;
-}
-
-body.dark .setting select {
-    background-color: #444;
+body.dark .compass-north {
     color: #eee;
-    border-color: #555;
 }
 
-@media (max-width: 600px) {
-    .compass {
-        width: 200px;
-        height: 200px;
+body.dark .compass-center {
+    background-color: #eee;
+}
+
+@media (max-width: 400px) {
+    .compass-ring {
+        width: 250px;
+        height: 250px;
     }
     
     #map-container {
-        height: 300px;
+        height: 250px;
     }
 }

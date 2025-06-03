@@ -1,6 +1,7 @@
 // Koordinaten der Kaaba in Mekka
 const KAABA_LAT = 21.422487;
 const KAABA_LNG = 39.826206;
+const DIRECTION_THRESHOLD = 5; // Grad-Toleranz für korrekte Ausrichtung
 
 // Globale Variablen
 let map;
@@ -8,40 +9,16 @@ let userMarker;
 let qiblaLine;
 let userLocation = null;
 let qiblaDirection = 0;
-let watchId = null;
+let currentHeading = 0;
 let compassPermission = false;
+let isCalibrated = false;
 
-// App initialisieren, wenn DOM geladen ist
+// App initialisieren
 document.addEventListener('DOMContentLoaded', function() {
-    initTabs();
     initMap();
-    initSettings();
     requestLocation();
+    setupCompass();
 });
-
-// Tab-Funktionalität initialisieren
-function initTabs() {
-    const tabs = document.querySelectorAll('.tab');
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            // Aktive Klasse von allen Tabs und Inhalten entfernen
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            
-            // Aktive Klasse zum geklickten Tab und entsprechenden Inhalt hinzufügen
-            tab.classList.add('active');
-            const tabId = tab.getAttribute('data-tab');
-            document.getElementById(tabId).classList.add('active');
-            
-            // Spezielle Behandlung für Live-Tab
-            if (tabId === 'live') {
-                startCompass();
-            } else {
-                stopCompass();
-            }
-        });
-    });
-}
 
 // Karte initialisieren
 function initMap() {
@@ -52,34 +29,6 @@ function initMap() {
     }).addTo(map);
 }
 
-// Einstellungen initialisieren
-function initSettings() {
-    // Gespeicherte Einstellungen laden
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    const savedMapStyle = localStorage.getItem('map-style') || 'streets';
-    
-    document.getElementById('theme').value = savedTheme;
-    document.getElementById('map-style').value = savedMapStyle;
-    applyTheme(savedTheme);
-    
-    // Einstellungen speichern Button
-    document.getElementById('save-settings').addEventListener('click', () => {
-        const theme = document.getElementById('theme').value;
-        const mapStyle = document.getElementById('map-style').value;
-        
-        localStorage.setItem('theme', theme);
-        localStorage.setItem('map-style', mapStyle);
-        
-        applyTheme(theme);
-        alert('Einstellungen gespeichert!');
-    });
-}
-
-// Design anwenden
-function applyTheme(theme) {
-    document.body.className = theme;
-}
-
 // Standort des Benutzers anfordern
 function requestLocation() {
     if (navigator.geolocation) {
@@ -88,15 +37,8 @@ function requestLocation() {
             error => handleLocationError(error),
             { enableHighAccuracy: true }
         );
-        
-        // Positionsänderungen überwachen
-        watchId = navigator.geolocation.watchPosition(
-            position => updateLocation(position),
-            error => handleLocationError(error),
-            { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
-        );
     } else {
-        document.getElementById('user-location').textContent = 'Geolokalisierung wird von diesem Browser nicht unterstützt.';
+        document.getElementById('user-location').textContent = 'Geolokalisierung nicht unterstützt';
     }
 }
 
@@ -120,53 +62,151 @@ function updateLocation(position) {
     // Karte aktualisieren
     updateMap(lat, lng);
     
-    // Kompass aktualisieren
-    updateCompass(qiblaDirection);
+    // Qibla-Linie im Kompass aktualisieren
+    updateQiblaLine();
 }
 
-// Standortfehler behandeln
-function handleLocationError(error) {
-    let message = '';
-    switch(error.code) {
-        case error.PERMISSION_DENIED:
-            message = "Standortzugriff wurde verweigert.";
-            break;
-        case error.POSITION_UNAVAILABLE:
-            message = "Standortinformationen sind nicht verfügbar.";
-            break;
-        case error.TIMEOUT:
-            message = "Die Standortanfrage hat zu lange gedauert.";
-            break;
-        case error.UNKNOWN_ERROR:
-            message = "Ein unbekannter Fehler ist aufgetreten.";
-            break;
-    }
-    document.getElementById('user-location').textContent = message;
-}
-
-// Karte mit Benutzerstandort und Qibla-Richtung aktualisieren
+// Karte aktualisieren
 function updateMap(lat, lng) {
-    // Kartenansicht setzen
     map.setView([lat, lng], 13);
     
-    // Vorhandene Marker und Linie entfernen, falls vorhanden
     if (userMarker) map.removeLayer(userMarker);
-    if (qiblaLine) map.removeLayer(qiblaLine);
-    
-    // Benutzermarker hinzufügen
-    userMarker = L.marker([lat, lng]).addTo(map)
-        .bindPopup("Ihr Standort").openPopup();
-    
-    // Kaaba-Marker hinzufügen
-    const kaabaMarker = L.marker([KAABA_LAT, KAABA_LNG]).addTo(map)
-        .bindPopup("Kaaba, Mekka");
+    userMarker = L.marker([lat, lng]).addTo(map).bindPopup("Ihr Standort");
     
     // Linie zur Qibla zeichnen
-    const endPoint = calculateDestinationPoint(lat, lng, qiblaDirection, 1000); // 1000 km in Qibla-Richtung
-    qiblaLine = L.polyline([[lat, lng], endPoint], {color: 'red'}).addTo(map);
+    const endPoint = calculateDestinationPoint(lat, lng, qiblaDirection, 1000);
+    if (qiblaLine) map.removeLayer(qiblaLine);
+    qiblaLine = L.polyline([[lat, lng], endPoint], {color: '#e74c3c', weight: 3}).addTo(map);
 }
 
-// Qibla-Richtung berechnen (in Grad von Norden)
+// Kompass einrichten
+function setupCompass() {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        // iOS 13+ Geräte
+        document.getElementById('accuracy-text').textContent = "Tippen Sie zum Aktivieren des Kompasses";
+        document.body.addEventListener('click', requestCompassPermission);
+    } else if ('ondeviceorientationabsolute' in window) {
+        // Geräte mit absolutem Kompass
+        window.addEventListener('deviceorientationabsolute', handleOrientation);
+        compassPermission = true;
+    } else if ('ondeviceorientation' in window) {
+        // Andere Geräte
+        window.addEventListener('deviceorientation', handleOrientation);
+        compassPermission = true;
+    } else {
+        document.getElementById('accuracy-text').textContent = "Kompass nicht verfügbar";
+    }
+}
+
+// Kompass-Berechtigung anfordern (iOS)
+function requestCompassPermission() {
+    DeviceOrientationEvent.requestPermission()
+        .then(response => {
+            if (response === 'granted') {
+                compassPermission = true;
+                window.addEventListener('deviceorientation', handleOrientation);
+                document.getElementById('accuracy-text').textContent = "Bewegen Sie Ihr Gerät im Kreis zur Kalibrierung";
+                document.body.removeEventListener('click', requestCompassPermission);
+            }
+        })
+        .catch(console.error);
+}
+
+// Geräteausrichtung behandeln
+function handleOrientation(event) {
+    if (!compassPermission) return;
+    
+    // Genauigkeitsinformationen anzeigen
+    if (event.webkitCompassAccuracy !== undefined) {
+        const accuracy = Math.max(0, 100 - event.webkitCompassAccuracy);
+        document.getElementById('accuracy-level').style.width = `${accuracy}%`;
+        isCalibrated = accuracy > 70;
+        
+        if (isCalibrated) {
+            document.getElementById('accuracy-text').textContent = "Kompass kalibriert";
+            document.getElementById('accuracy-level').style.backgroundColor = "#2ecc71";
+        } else {
+            document.getElementById('accuracy-text').textContent = "Bewegen Sie Ihr Gerät im Kreis zur Kalibrierung";
+            document.getElementById('accuracy-level').style.backgroundColor = "#3498db";
+        }
+    }
+    
+    // Richtung aktualisieren
+    if (event.alpha !== null) {
+        currentHeading = event.alpha; // Grad von Norden (0-360)
+        updateCompass();
+        checkDirection();
+    }
+}
+
+// Kompassanzeige aktualisieren
+function updateCompass() {
+    const arrow = document.getElementById('compass-arrow');
+    arrow.style.transform = `translate(0, -50%) rotate(${currentHeading}deg)`;
+}
+
+// Qibla-Linie aktualisieren
+function updateQiblaLine() {
+    const qiblaLineElement = document.getElementById('qibla-line');
+    qiblaLineElement.style.transform = `translate(0, -50%) rotate(${qiblaDirection}deg)`;
+}
+
+// Überprüfen, ob in Qibla-Richtung ausgerichtet
+function checkDirection() {
+    if (!isCalibrated || !qiblaDirection) return;
+    
+    const arrow = document.getElementById('compass-arrow');
+    const directionDiff = Math.abs((currentHeading - qiblaDirection + 360) % 360);
+    const isCorrect = Math.min(directionDiff, 360 - directionDiff) <= DIRECTION_THRESHOLD;
+    
+    if (isCorrect) {
+        arrow.classList.add('correct-direction');
+        arrow.classList.remove('wrong-direction');
+        document.getElementById('direction-status').textContent = "✅ Korrekt ausgerichtet";
+        document.getElementById('direction-status').style.color = "#2ecc71";
+        
+        // Kartenlinie grün färben wenn korrekt ausgerichtet
+        if (qiblaLine) {
+            qiblaLine.setStyle({color: '#2ecc71'});
+        }
+    } else {
+        arrow.classList.add('wrong-direction');
+        arrow.classList.remove('correct-direction');
+        document.getElementById('direction-status').textContent = "❌ Nicht ausgerichtet";
+        document.getElementById('direction-status').style.color = "#e74c3c";
+        
+        // Kartenlinie rot färben wenn falsch ausgerichtet
+        if (qiblaLine) {
+            qiblaLine.setStyle({color: '#e74c3c'});
+        }
+    }
+    
+    // Richtungstext aktualisieren
+    updateDirectionText(directionDiff);
+}
+
+// Richtungstext aktualisieren
+function updateDirectionText(diff) {
+    const directionText = document.getElementById('direction-text');
+    const normalizedDiff = Math.min(diff, 360 - diff);
+    
+    if (normalizedDiff <= DIRECTION_THRESHOLD) {
+        directionText.textContent = "Perfekt ausgerichtet!";
+        directionText.style.color = "#2ecc71";
+    } else if (normalizedDiff <= 30) {
+        directionText.textContent = "Fast richtig - etwas weiter drehen";
+        directionText.style.color = "#f39c12";
+    } else if (normalizedDiff <= 90) {
+        directionText.textContent = "Drehen Sie sich in Qibla-Richtung";
+        directionText.style.color = "#e74c3c";
+    } else {
+        const direction = ((qiblaDirection - currentHeading + 360) % 360) <= 180 ? "rechts" : "links";
+        directionText.textContent = `Drehen Sie sich nach ${direction}`;
+        directionText.style.color = "#e74c3c";
+    }
+}
+
+// Qibla-Richtung berechnen
 function calculateQiblaDirection(lat, lng) {
     const phiK = KAABA_LAT * Math.PI / 180.0;
     const lambdaK = KAABA_LNG * Math.PI / 180.0;
@@ -181,9 +221,9 @@ function calculateQiblaDirection(lat, lng) {
     return (psi + 360) % 360;
 }
 
-// Entfernung zwischen zwei Punkten berechnen (in km)
+// Entfernung berechnen
 function calculateDistance(lat1, lng1, lat2, lng2) {
-    const R = 6371; // Erdradius in km
+    const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLng = (lng2 - lng1) * Math.PI / 180;
     const a = 
@@ -194,9 +234,9 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
     return R * c;
 }
 
-// Zielpunkt berechnen basierend auf Startpunkt, Peilung und Entfernung
+// Zielpunkt berechnen
 function calculateDestinationPoint(lat, lng, bearing, distance) {
-    const R = 6371; // Erdradius in km
+    const R = 6371;
     const latRad = lat * Math.PI / 180;
     const lngRad = lng * Math.PI / 180;
     const bearingRad = bearing * Math.PI / 180;
@@ -214,61 +254,22 @@ function calculateDestinationPoint(lat, lng, bearing, distance) {
     return [destLat * 180 / Math.PI, destLng * 180 / Math.PI];
 }
 
-// Kompassanzeige aktualisieren
-function updateCompass(direction) {
-    const arrow = document.querySelector('.compass-arrow');
-    const qiblaArrow = document.querySelector('.compass-qibla');
-    
-    arrow.style.transform = `translate(0, -50%) rotate(0deg)`;
-    qiblaArrow.style.transform = `translate(0, -50%) rotate(${direction}deg)`;
-    
-    document.querySelector('.compass-direction').textContent = `Qibla-Richtung: ${direction.toFixed(1)}°`;
-}
-
-// Kompassfunktionalität für Live-Tab starten
-function startCompass() {
-    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-        // iOS 13+ Geräte
-        DeviceOrientationEvent.requestPermission()
-            .then(response => {
-                if (response === 'granted') {
-                    compassPermission = true;
-                    window.addEventListener('deviceorientation', handleOrientation);
-                } else {
-                    alert('Kompasszugriff wurde verweigert. Live-Kompass funktioniert nicht.');
-                }
-            })
-            .catch(console.error);
-    } else if ('ondeviceorientation' in window) {
-        // Andere Geräte
-        window.addEventListener('deviceorientation', handleOrientation);
-        compassPermission = true;
-    } else {
-        alert('Geräteausrichtung wird auf diesem Gerät nicht unterstützt.');
+// Standortfehler behandeln
+function handleLocationError(error) {
+    let message = '';
+    switch(error.code) {
+        case error.PERMISSION_DENIED:
+            message = "Standortzugriff wurde verweigert";
+            break;
+        case error.POSITION_UNAVAILABLE:
+            message = "Standortinformation nicht verfügbar";
+            break;
+        case error.TIMEOUT:
+            message = "Standortanfrage hat zu lange gedauert";
+            break;
+        case error.UNKNOWN_ERROR:
+            message = "Unbekannter Fehler";
+            break;
     }
-}
-
-// Kompassfunktionalität stoppen
-function stopCompass() {
-    if (compassPermission) {
-        window.removeEventListener('deviceorientation', handleOrientation);
-    }
-}
-
-// Geräteausrichtungsereignisse behandeln
-function handleOrientation(event) {
-    if (event.absolute && event.alpha !== null) {
-        const alpha = event.alpha;  // Kompassrichtung (0-360)
-        const beta = event.beta;    // Neigung vorne-hinten (-180 bis 180)
-        const gamma = event.gamma;  // Neigung links-rechts (-90 bis 90)
-        
-        // Winkel zwischen Geräteausrichtung und Qibla-Richtung berechnen
-        let angle = (360 - alpha + qiblaDirection) % 360;
-        
-        // Live-Kompassanzeige aktualisieren
-        const liveArrow = document.querySelector('.live-arrow');
-        liveArrow.style.transform = `translate(0, -50%) rotate(${angle}deg)`;
-        
-        document.getElementById('live-qibla').textContent = angle.toFixed(1);
-    }
+    document.getElementById('user-location').textContent = message;
 }

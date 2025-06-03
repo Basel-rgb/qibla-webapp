@@ -10,62 +10,31 @@
 <body>
     <div class="container">
         <h1>Qibla Richtungsfinder</h1>
-        <div class="tabs">
-            <button class="tab active" data-tab="map">Karte</button>
-            <button class="tab" data-tab="compass">Kompass</button>
-            <button class="tab" data-tab="live">Live</button>
-            <button class="tab" data-tab="settings">Einstellungen</button>
-        </div>
         
-        <div class="tab-content active" id="map">
-            <div id="map-container"></div>
-            <div class="location-info">
-                <p>Ihr Standort: <span id="user-location">Wird ermittelt...</span></p>
-                <p>Entfernung zur Kaaba: <span id="distance">-</span></p>
-                <p>Qibla Richtung: <span id="direction">-</span>°</p>
+        <div class="accuracy-info" id="accuracy-info">
+            <span id="accuracy-text">Bewegen Sie Ihr Gerät im Kreis zur Kalibrierung</span>
+            <div class="accuracy-bar">
+                <div class="accuracy-level" id="accuracy-level"></div>
             </div>
         </div>
         
-        <div class="tab-content" id="compass">
-            <div class="compass-container">
-                <div class="compass">
-                    <div class="compass-arrow"></div>
-                    <div class="compass-qibla"></div>
-                    <div class="compass-north">N</div>
-                </div>
-                <p class="compass-direction">Richten Sie Ihr Gerät in Qibla-Richtung</p>
-            </div>
+        <div id="map-container"></div>
+        
+        <div class="location-info">
+            <p>Ihr Standort: <span id="user-location">Wird ermittelt...</span></p>
+            <p>Entfernung zur Kaaba: <span id="distance">-</span></p>
+            <p>Qibla Richtung: <span id="direction">-</span>°</p>
+            <p>Gerichtet: <span id="direction-status">❌ Nicht ausgerichtet</span></p>
         </div>
         
-        <div class="tab-content" id="live">
-            <div class="live-container">
-                <p>Live-Kompassmodus - bewegen Sie Ihr Gerät</p>
-                <div class="live-compass">
-                    <div class="live-arrow"></div>
-                </div>
-                <p class="live-direction">Qibla: <span id="live-qibla">0</span>°</p>
+        <div class="compass-container">
+            <div class="compass-ring">
+                <div class="compass-arrow" id="compass-arrow"></div>
+                <div class="compass-qibla-line" id="qibla-line"></div>
+                <div class="compass-north">N</div>
+                <div class="compass-center"></div>
             </div>
-        </div>
-        
-        <div class="tab-content" id="settings">
-            <div class="settings-container">
-                <h2>Einstellungen</h2>
-                <div class="setting">
-                    <label for="theme">Design:</label>
-                    <select id="theme">
-                        <option value="light">Hell</option>
-                        <option value="dark">Dunkel</option>
-                    </select>
-                </div>
-                <div class="setting">
-                    <label for="map-style">Kartenstil:</label>
-                    <select id="map-style">
-                        <option value="streets">Straßen</option>
-                        <option value="satellite">Satellit</option>
-                    </select>
-                </div>
-                <button id="save-settings">Einstellungen speichern</button>
-            </div>
+            <p class="direction-text" id="direction-text">Richten Sie Ihr Gerät in Qibla-Richtung</p>
         </div>
     </div>
 
