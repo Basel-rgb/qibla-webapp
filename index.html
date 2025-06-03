@@ -1,53 +1,70 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Qibla Finder Pro</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-rotate@0.2.3/dist/leaflet-rotate.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Qibla Finder Pro</title>
+    <meta name="description" content="Finde die genaue Qibla-Richtung mit Kompass, Karte und Ausrichtungshilfe.">
+    <link rel="icon" href="qibla-icon.png" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 </head>
 <body>
-  <div class="app-container">
-    <div class="header">
-      <div class="time" id="current-time">--:--</div>
-      <h1>Qibla Finder Pro</h1>
+    <div class="app-container">
+        <div class="header">
+            <div class="time" id="current-time">--:--</div>
+            <h1>Qibla Finder Pro</h1>
+        </div>
+
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+
+        <div class="compass-container">
+            <div class="compass-ring">
+                <div class="compass-arrow" id="compass-arrow"></div>
+                <div class="compass-qibla-line" id="qibla-line"></div>
+                <div class="compass-center-dot"></div>
+                <div class="compass-north">N</div>
+            </div>
+            <div class="direction-status" id="direction-status">
+                <span id="direction-text">Richten Sie Ihr Gerät aus</span>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <div class="info-item">
+                <span class="info-label">Ihr Standort:</span>
+                <span class="info-value" id="user-location">Wird ermittelt...</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Entfernung zur Kaaba:</span>
+                <span class="info-value" id="distance">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Qibla Richtung:</span>
+                <span class="info-value" id="direction">-</span>°
+            </div>
+        </div>
+
+        <footer class="footer-note">
+            <p style="font-size: 12px; color: #888; text-align: center;">
+                Diese App nutzt deinen Standort nur zur Qibla-Bestimmung. Es werden keine Daten gespeichert.
+            </p>
+        </footer>
     </div>
 
-    <div class="map-container" id="map-container"></div>
-
-    <div class="compass-container">
-      <div class="compass-ring">
-        <div class="compass-arrow" id="compass-arrow"></div>
-        <div class="compass-qibla-line" id="qibla-line"></div>
-        <div class="compass-center-dot"></div>
-        <div class="compass-north">N</div>
-      </div>
-      <div class="direction-status" id="direction-status">
-        <span id="direction-text">Richten Sie Ihr Gerät aus</span>
-      </div>
-    </div>
-
-    <div class="info-panel">
-      <div class="info-item">
-        <span class="info-label">Ihr Standort:</span>
-        <span class="info-value" id="user-location">Wird ermittelt...</span>
-      </div>
-      <div class="info-item">
-        <span class="info-label">Entfernung zur Kaaba:</span>
-        <span class="info-value" id="distance">-</span>
-      </div>
-      <div class="info-item">
-        <span class="info-label">Qibla Richtung:</span>
-        <span class="info-value" id="direction">-</span>°
-      </div>
-    </div>
-  </div>
-
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet-rotate@0.2.3/dist/leaflet-rotate.min.js"></script>
-  <script src="app.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+      // Uhrzeit anzeigen
+      setInterval(() => {
+          const now = new Date();
+          const hours = now.getHours().toString().padStart(2, '0');
+          const minutes = now.getMinutes().toString().padStart(2, '0');
+          document.getElementById("current-time").textContent = `${hours}:${minutes}`;
+      }, 1000);
+    </script>
+    <script src="app.js"></script>
 </body>
 </html>
