@@ -1,17 +1,75 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Qibla Finder</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qibla Richtungsfinder</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
 </head>
 <body>
-  <div id="map"></div>
-  <div id="info">⏳ Standort wird ermittelt…</div>
+    <div class="container">
+        <h1>Qibla Richtungsfinder</h1>
+        <div class="tabs">
+            <button class="tab active" data-tab="map">Karte</button>
+            <button class="tab" data-tab="compass">Kompass</button>
+            <button class="tab" data-tab="live">Live</button>
+            <button class="tab" data-tab="settings">Einstellungen</button>
+        </div>
+        
+        <div class="tab-content active" id="map">
+            <div id="map-container"></div>
+            <div class="location-info">
+                <p>Ihr Standort: <span id="user-location">Wird ermittelt...</span></p>
+                <p>Entfernung zur Kaaba: <span id="distance">-</span></p>
+                <p>Qibla Richtung: <span id="direction">-</span>°</p>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="compass">
+            <div class="compass-container">
+                <div class="compass">
+                    <div class="compass-arrow"></div>
+                    <div class="compass-qibla"></div>
+                    <div class="compass-north">N</div>
+                </div>
+                <p class="compass-direction">Richten Sie Ihr Gerät in Qibla-Richtung</p>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="live">
+            <div class="live-container">
+                <p>Live-Kompassmodus - bewegen Sie Ihr Gerät</p>
+                <div class="live-compass">
+                    <div class="live-arrow"></div>
+                </div>
+                <p class="live-direction">Qibla: <span id="live-qibla">0</span>°</p>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="settings">
+            <div class="settings-container">
+                <h2>Einstellungen</h2>
+                <div class="setting">
+                    <label for="theme">Design:</label>
+                    <select id="theme">
+                        <option value="light">Hell</option>
+                        <option value="dark">Dunkel</option>
+                    </select>
+                </div>
+                <div class="setting">
+                    <label for="map-style">Kartenstil:</label>
+                    <select id="map-style">
+                        <option value="streets">Straßen</option>
+                        <option value="satellite">Satellit</option>
+                    </select>
+                </div>
+                <button id="save-settings">Einstellungen speichern</button>
+            </div>
+        </div>
+    </div>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="app.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
