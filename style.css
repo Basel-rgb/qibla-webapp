@@ -1,64 +1,98 @@
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f5f5f5;
-    color: #333;
+:root {
+    --primary: #3a86ff;
+    --success: #2ecc71;
+    --danger: #ff3b30;
+    --background: #f8f9fa;
+    --card: #ffffff;
+    --text: #333333;
+    --text-light: #666666;
 }
 
-.container {
-    max-width: 100%;
-    padding: 20px;
+body.dark {
+    --background: #121212;
+    --card: #1e1e1e;
+    --text: #f0f0f0;
+    --text-light: #bbbbbb;
+}
+
+* {
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
 }
 
-h1 {
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--background);
+    color: var(--text);
+    line-height: 1.6;
+}
+
+/* Optional: Dark Mode automatisch aktivieren */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #121212;
+        color: #f0f0f0;
+    }
+}
+
+.app-container {
+    max-width: 100%;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
     text-align: center;
-    color: #2c3e50;
     margin-bottom: 20px;
 }
 
-#map-container {
-    height: 300px;
+.time {
+    font-size: 48px;
+    font-weight: 300;
+    color: var(--text);
+}
+
+h1 {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text);
+    margin-top: 5px;
+}
+
+.map-container {
+    height: 40vh;
+    min-height: 300px;
     width: 100%;
-    border-radius: 10px;
-    margin-bottom: 15px;
-    border: 2px solid #ddd;
-}
-
-.location-info {
-    background-color: #f8f9fa;
-    padding: 15px;
-    border-radius: 10px;
+    border-radius: 16px;
+    overflow: hidden;
     margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border: 1px solid rgba(0,0,0,0.1);
 }
 
-.location-info p {
-    margin: 5px 0;
-    font-size: 16px;
+#map {
+    width: 100%;
+    height: 100%;
 }
 
-#direction-status {
-    font-weight: bold;
-}
-
-/* Kompass-Stile */
 .compass-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    margin-top: 20px;
+    margin-bottom: 20px;
 }
 
 .compass-ring {
     width: 280px;
     height: 280px;
     border-radius: 50%;
-    background-color: #f8f9fa;
+    background-color: var(--card);
     position: relative;
-    border: 2px solid #333;
-    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    border: 1px solid rgba(0,0,0,0.1);
 }
 
 .compass-arrow {
@@ -66,12 +100,13 @@ h1 {
     top: 50%;
     left: 50%;
     width: 45%;
-    height: 6px;
-    background-color: #e74c3c;
+    height: 5px;
+    background-color: var(--danger);
     transform-origin: left center;
     transform: translate(0, -50%) rotate(0deg);
     border-radius: 3px;
-    transition: transform 0.1s ease-out;
+    transition: transform 0.1s ease-out, background-color 0.3s;
+    z-index: 2;
 }
 
 .compass-qibla-line {
@@ -80,109 +115,112 @@ h1 {
     left: 50%;
     width: 45%;
     height: 4px;
-    background-color: #3498db;
+    background-color: var(--primary);
     transform-origin: left center;
     transform: translate(0, -50%) rotate(0deg);
     opacity: 0.8;
     border-radius: 2px;
+    z-index: 1;
 }
 
-.compass-north {
-    position: absolute;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-weight: bold;
-    font-size: 18px;
-    color: #333;
-}
-
-.compass-center {
+.compass-center-dot {
     position: absolute;
     top: 50%;
     left: 50%;
     width: 12px;
     height: 12px;
-    background-color: #333;
+    background-color: var(--primary);
     border-radius: 50%;
     transform: translate(-50%, -50%);
+    z-index: 3;
 }
 
-.direction-text {
+.compass-north {
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text);
+}
+
+.direction-status {
     margin-top: 20px;
+    text-align: center;
     font-size: 18px;
-    text-align: center;
-    font-weight: bold;
+    font-weight: 500;
 }
 
-/* Genauigkeits-Anzeige */
-.accuracy-info {
-    background-color: #f8f9fa;
-    padding: 10px;
-    border-radius: 10px;
-    margin-bottom: 15px;
-    text-align: center;
+#direction-text {
+    padding: 8px 16px;
+    border-radius: 20px;
+    background-color: rgba(255,59,48,0.1);
+    color: var(--danger);
 }
 
-#accuracy-text {
-    display: block;
-    margin-bottom: 8px;
-    font-size: 14px;
+.info-panel {
+    background-color: var(--card);
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-.accuracy-bar {
-    width: 100%;
-    height: 8px;
-    background-color: #ddd;
-    border-radius: 4px;
-    overflow: hidden;
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
 }
 
-.accuracy-level {
-    height: 100%;
-    width: 0%;
-    background-color: #3498db;
-    transition: width 0.3s;
+.info-item:last-child {
+    margin-bottom: 0;
 }
 
-/* Farben für Ausrichtungsstatus */
+.info-label {
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.info-value {
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* Erfolgszustand */
 .correct-direction {
-    background-color: #2ecc71 !important;
-    box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+    background-color: var(--success) !important;
 }
 
-.wrong-direction {
-    background-color: #e74c3c !important;
+.correct-text {
+    background-color: rgba(46,204,113,0.1) !important;
+    color: var(--success) !important;
 }
 
-/* Dunkles Design */
-body.dark {
-    background-color: #222;
-    color: #eee;
+/* Vibration Animation */
+@keyframes vibrate {
+    0% { transform: translate(0, -50%) rotate(0deg); }
+    25% { transform: translate(0, -50%) rotate(1deg); }
+    50% { transform: translate(0, -50%) rotate(-1deg); }
+    75% { transform: translate(0, -50%) rotate(1deg); }
+    100% { transform: translate(0, -50%) rotate(0deg); }
 }
 
-body.dark .location-info,
-body.dark .compass-ring,
-body.dark .accuracy-info {
-    background-color: #333;
-    color: #eee;
+.vibrate {
+    animation: vibrate 0.3s linear;
 }
 
-body.dark .compass-north {
-    color: #eee;
-}
-
-body.dark .compass-center {
-    background-color: #eee;
-}
-
-@media (max-width: 400px) {
-    .compass-ring {
-        width: 250px;
-        height: 250px;
+/* Responsive Anpassungen */
+@media screen and (max-width: 400px) {
+    .time {
+        font-size: 36px;
     }
-    
-    #map-container {
-        height: 250px;
+
+    .compass-ring {
+        width: 220px;
+        height: 220px;
+    }
+
+    .direction-status {
+        font-size: 16px;
     }
 }
